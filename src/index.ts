@@ -1,6 +1,19 @@
 import axios, { AxiosError } from 'axios';
 import { compile } from 'path-to-regexp';
 
+export type Payload = {
+  Body?: unknown;
+  Querystring?: unknown;
+  Params?: Record<string, string>;
+  Headers?: unknown;
+  Reply: unknown;
+};
+
+export type Options<Config extends Payload, Error> = {
+  baseURL: string;
+  effect?: Effect<Config, Error>;
+};
+
 export type UnionToIntersection<U> = (
   U extends any ? (k: U) => void : never
 ) extends (k: infer I) => void
@@ -19,44 +32,28 @@ export type TuplifyUnion<
   N = [T] extends [never] ? true : false
 > = true extends N ? [] : [...TuplifyUnion<Exclude<T, L>>, L];
 
-export type Effect<Config extends BaseConfig, Error> = (
+export type Effect<Config extends Payload, Error> = (
   action: Fetcher<Config, Error>
 ) => Fetcher<Config, Error>;
 
-export type BaseConfig = {
-  Body?: unknown;
-  Querystring?: unknown;
-  Params?: Record<string, string>;
-  Headers?: unknown;
-  Reply: unknown;
-};
-
-export type Options<Config extends BaseConfig, Error> = {
-  baseURL: string;
-  effect?: Effect<Config, Error>;
-};
-
-export type Input<API> = {
+export type Schema<API> = {
   [Endpoint in keyof API]: TuplifyUnion<keyof API[Endpoint]>;
 };
 
-export type Output<API> = {
-  [Endpoint in keyof API]: {
-    [Method in keyof API[Endpoint]]: Fetcher<
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      API[Endpoint][Method],
-      Error
-    >;
-  };
+export type Methods<MethodsRecord extends object> = {
+  [Method in keyof MethodsRecord]: Fetcher<MethodsRecord[Method], Error>;
 };
 
-export type Fetcher<Config extends BaseConfig, Error> = (
+export type Endpoints<EndpointsRecord extends object> = {
+  [Endpoint in keyof EndpointsRecord]: Methods<EndpointsRecord[Endpoint]>;
+};
+
+export type Fetcher<Config extends Payload, Error> = (
   data: Omit<Config, 'Reply' | 'Headers'>
 ) => Promise<Exclude<Config['Reply'], Error>>;
 
 export const fetcher =
-  <Config extends BaseConfig, Error>(
+  <Config extends Payload, Error>(
     baseURL: string,
     url: string,
     method: string
@@ -80,16 +77,16 @@ export const fetcher =
     }
   };
 
-export const makeApi = <API, Error, Effect = void>(
-  schema: Input<API>,
-  options: Options<BaseConfig, Error>
-): Effect extends void ? Output<API> : Effect => {
+export const makeApi = <API extends object, Error, Effect = void>(
+  schema: Schema<API>,
+  options: Options<Payload, Error>
+): Effect extends void ? Endpoints<API> : Effect => {
   const result = schema as any;
   const { baseURL, effect } = options;
 
   for (const endpoint in result) {
     result[endpoint] = result[endpoint].reduce(
-      (acc: Record<string, Fetcher<BaseConfig, Error>>, method: string) => {
+      (acc: Record<string, Fetcher<Payload, Error>>, method: string) => {
         const handler = fetcher(baseURL, endpoint, method);
         acc[method] = effect ? effect(handler) : handler;
 

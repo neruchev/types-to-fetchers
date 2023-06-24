@@ -1,6 +1,6 @@
 {
   "name": "types-to-fetchers",
-  "version": "0.0.0",
+  "version": "0.0.3",
   "description": "Automatically creates fetchers from declarative descriptions of APIs and types",
   "keywords": [
     "API",
@@ -11,7 +11,7 @@
     "schema",
     "typescript"
   ],
-  "main": "./build/src",
+  "main": "./build",
   "homepage": "https://github.com/neruchev/types-to-fetchers#readme",
   "repository": "git@github.com:neruchev/types-to-fetchers.git",
   "bugs": {
@@ -29,7 +29,7 @@
     "prepare": "husky install"
   },
   "dependencies": {
-    "axios": "^1.4.0",
+    "axios": "^0.27.2",
     "path-to-regexp": "^6.2.1"
   },
   "devDependencies": {
