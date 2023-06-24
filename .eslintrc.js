@@ -12,6 +12,7 @@ module.exports = {
   rules: {
     '@typescript-eslint/ban-types': ['error', { types: { '{}': false } }],
     '@typescript-eslint/explicit-module-boundary-types': 'off',
+    '@typescript-eslint/no-explicit-any': 'off',
     '@typescript-eslint/no-namespace': 'off',
     '@typescript-eslint/no-unused-vars': ['error'],
     'jsx-a11y/anchor-is-valid': 'off',
