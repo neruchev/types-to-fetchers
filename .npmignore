@@ -12,7 +12,6 @@ typings/*
 .prettierignore
 .prettierrc
 jest.config.js
-README.md
 tsconfig.json
 yarn-error.log
 yarn.lock

@@ -33,7 +33,12 @@ export type TuplifyUnion<
 > = true extends N ? [] : [...TuplifyUnion<Exclude<T, L>>, L];
 
 export type Effect<Config extends Payload, Error> = (
-  action: Fetcher<Config, Error>
+  action: Fetcher<Config, Error>,
+  params: {
+    baseURL: string;
+    endpoint: string;
+    method: string;
+  }
 ) => Fetcher<Config, Error>;
 
 export type Schema<API> = {
@@ -88,7 +93,9 @@ export const makeApi = <API extends object, Error, Effect = void>(
     result[endpoint] = result[endpoint].reduce(
       (acc: Record<string, Fetcher<Payload, Error>>, method: string) => {
         const handler = fetcher(baseURL, endpoint, method);
-        acc[method] = effect ? effect(handler) : handler;
+        acc[method] = effect
+          ? effect(handler, { endpoint, method, baseURL })
+          : handler;
 
         return acc;
       },

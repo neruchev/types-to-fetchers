@@ -1,0 +1,37 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Make API The effect forwards correctly 1`] = `
+{
+  "/": {
+    "GET": {
+      "baseURL": "hrrps://api.mysite.com/",
+      "endpoint": "/",
+      "method": "GET",
+    },
+  },
+  "/foo/:bar": {
+    "GET": {
+      "baseURL": "hrrps://api.mysite.com/",
+      "endpoint": "/foo/:bar",
+      "method": "GET",
+    },
+    "POST": {
+      "baseURL": "hrrps://api.mysite.com/",
+      "endpoint": "/foo/:bar",
+      "method": "POST",
+    },
+  },
+}
+`;
+
+exports[`Make API The generator output snapshot is correctly 1`] = `
+{
+  "/": {
+    "GET": [Function],
+  },
+  "/foo/:bar": {
+    "GET": [Function],
+    "POST": [Function],
+  },
+}
+`;
