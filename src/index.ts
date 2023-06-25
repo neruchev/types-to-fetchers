@@ -45,12 +45,15 @@ export type Schema<API> = {
   [Endpoint in keyof API]: TuplifyUnion<keyof API[Endpoint]>;
 };
 
-export type Methods<MethodsRecord extends object> = {
+export type Methods<MethodsRecord extends object, Error> = {
   [Method in keyof MethodsRecord]: Fetcher<MethodsRecord[Method], Error>;
 };
 
-export type Endpoints<EndpointsRecord extends object> = {
-  [Endpoint in keyof EndpointsRecord]: Methods<EndpointsRecord[Endpoint]>;
+export type Endpoints<EndpointsRecord extends object, Error> = {
+  [Endpoint in keyof EndpointsRecord]: Methods<
+    EndpointsRecord[Endpoint],
+    Error
+  >;
 };
 
 export type Fetcher<Config extends Payload, Error> = (
@@ -85,7 +88,7 @@ export const fetcher =
 export const makeApi = <API extends object, Error, Effect = void>(
   schema: Schema<API>,
   options: Options<Payload, Error>
-): Effect extends void ? Endpoints<API> : Effect => {
+): Effect extends void ? Endpoints<API, Error> : Effect => {
   const result = schema as any;
   const { baseURL, effect } = options;
 
