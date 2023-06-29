@@ -3,7 +3,7 @@ import axios from 'axios';
 
 jest.mock('axios');
 const mocked = jest.mocked(axios, { shallow: true });
-mocked.mockReturnValue({ data: { foo: 'bar' } } as never);
+mocked.mockResolvedValue({ data: { foo: 'bar' } } as never);
 
 interface API {
   '/': {
@@ -81,6 +81,36 @@ describe('Fetcher', () => {
 
   test('Response returned correctly', async () => {
     const response = await fetcher('', '/', 'GET')({});
+
+    expect(response).toEqual({ foo: 'bar' });
+  });
+
+  test('Signal not exist, work correctly', async () => {
+    const controller = new AbortController();
+
+    const response = await fetcher('', '/', 'GET')({});
+
+    controller.abort();
+
+    expect(axios).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        signal: controller.signal,
+      })
+    );
+
+    expect(response).toEqual({ foo: 'bar' });
+  });
+
+  test('Signal exist, work correctly', async () => {
+    const controller = new AbortController();
+
+    const response = await fetcher('', '/', 'GET', controller.signal)({});
+
+    expect(axios).toHaveBeenCalledWith(
+      expect.objectContaining({
+        signal: controller.signal,
+      })
+    );
 
     expect(response).toEqual({ foo: 'bar' });
   });

@@ -64,7 +64,8 @@ export const fetcher =
   <Config extends Payload, Error>(
     baseURL: string,
     url: string,
-    method: string
+    method: string,
+    signal?: AbortSignal
   ): Fetcher<Config, Error> =>
   async ({ Body, Querystring, Params }) => {
     try {
@@ -75,6 +76,7 @@ export const fetcher =
         data: Body,
         params: Querystring,
         withCredentials: true,
+        signal,
       });
 
       return data;
