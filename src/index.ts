@@ -46,7 +46,9 @@ export type Schema<API> = {
 };
 
 export type Methods<MethodsRecord extends object, Error> = {
-  [Method in keyof MethodsRecord]: Fetcher<MethodsRecord[Method], Error>;
+  [Method in keyof MethodsRecord]: Fetcher<MethodsRecord[Method], Error> & {
+    abort: AbortController['abort'];
+  };
 };
 
 export type Endpoints<EndpointsRecord extends object, Error> = {
@@ -65,7 +67,7 @@ export const fetcher =
     baseURL: string,
     url: string,
     method: string,
-    signal?: AbortSignal
+    signal: AbortSignal
   ): Fetcher<Config, Error> =>
   async ({ Body, Querystring, Params }) => {
     try {
@@ -96,11 +98,31 @@ export const makeApi = <API extends object, Error, Effect = void>(
 
   for (const endpoint in result) {
     result[endpoint] = result[endpoint].reduce(
-      (acc: Record<string, Fetcher<Payload, Error>>, method: string) => {
-        const handler = fetcher(baseURL, endpoint, method);
-        acc[method] = effect
+      (
+        acc: Record<
+          string,
+          Fetcher<Payload, Error> & {
+            abort: AbortController['abort'];
+          }
+        >,
+        method: string
+      ) => {
+        const abortController = new AbortController();
+
+        const handler = fetcher(
+          baseURL,
+          endpoint,
+          method,
+          abortController.signal
+        );
+
+        const resultHandler = effect
           ? effect(handler, { endpoint, method, baseURL })
           : handler;
+
+        acc[method] = Object.assign(resultHandler, {
+          abort: abortController.abort.bind(abortController),
+        });
 
         return acc;
       },

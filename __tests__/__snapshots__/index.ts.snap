@@ -4,6 +4,7 @@ exports[`Make API The effect forwards correctly 1`] = `
 {
   "/": {
     "GET": {
+      "abort": [Function],
       "baseURL": "hrrps://api.mysite.com/",
       "endpoint": "/",
       "method": "GET",
@@ -11,11 +12,13 @@ exports[`Make API The effect forwards correctly 1`] = `
   },
   "/foo/:bar": {
     "GET": {
+      "abort": [Function],
       "baseURL": "hrrps://api.mysite.com/",
       "endpoint": "/foo/:bar",
       "method": "GET",
     },
     "POST": {
+      "abort": [Function],
       "baseURL": "hrrps://api.mysite.com/",
       "endpoint": "/foo/:bar",
       "method": "POST",
