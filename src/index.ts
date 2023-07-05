@@ -62,32 +62,56 @@ export type Fetcher<Config extends Payload, Error> = (
   data: Omit<Config, 'Reply' | 'Headers'>
 ) => Promise<Exclude<Config['Reply'], Error>>;
 
-export const fetcher =
-  <Config extends Payload, Error>(
-    baseURL: string,
-    url: string,
-    method: string,
-    signal: AbortSignal
-  ): Fetcher<Config, Error> =>
-  async ({ Body, Querystring, Params }) => {
-    try {
-      const { data } = await axios({
-        url: compile(url)(Params),
-        method,
-        baseURL,
-        data: Body,
-        params: Querystring,
-        withCredentials: true,
-        signal,
-      });
+export const fetcher = <Config extends Payload, Error>(
+  baseURL: string,
+  url: string,
+  method: string
+): Fetcher<Config, Error> & {
+  abort: AbortController['abort'];
+} => {
+  let abortController: AbortController | undefined;
 
-      return data;
-    } catch (error) {
-      const { response, message } = error as AxiosError<Error>;
+  return Object.assign(
+    async ({
+      Body,
+      Querystring,
+      Params,
+    }: Partial<{
+      Body: Config['Body'];
+      Querystring: Config['Querystring'];
+      Params: Config['Params'];
+    }>) => {
+      abortController = new AbortController();
 
-      throw (response?.data as any)?.error ?? message ?? 'Unknown error';
+      try {
+        const { data } = await axios({
+          url: compile(url)(Params),
+          method,
+          baseURL,
+          data: Body,
+          params: Querystring,
+          withCredentials: true,
+          signal: abortController.signal,
+        });
+
+        return data;
+      } catch (error) {
+        const { response, message } = error as AxiosError<Error>;
+
+        throw (response?.data as any)?.error ?? message ?? 'Unknown error';
+      }
+    },
+    {
+      abort: () => {
+        if (!abortController) {
+          return;
+        }
+
+        abortController.abort();
+      },
     }
-  };
+  );
+};
 
 export const makeApi = <API extends object, Error, Effect = void>(
   schema: Schema<API>,
@@ -98,31 +122,12 @@ export const makeApi = <API extends object, Error, Effect = void>(
 
   for (const endpoint in result) {
     result[endpoint] = result[endpoint].reduce(
-      (
-        acc: Record<
-          string,
-          Fetcher<Payload, Error> & {
-            abort: AbortController['abort'];
-          }
-        >,
-        method: string
-      ) => {
-        const abortController = new AbortController();
+      (acc: Record<string, Fetcher<Payload, Error>>, method: string) => {
+        const handler = fetcher(baseURL, endpoint, method);
 
-        const handler = fetcher(
-          baseURL,
-          endpoint,
-          method,
-          abortController.signal
-        );
-
-        const resultHandler = effect
+        acc[method] = effect
           ? effect(handler, { endpoint, method, baseURL })
           : handler;
-
-        acc[method] = Object.assign(resultHandler, {
-          abort: abortController.abort.bind(abortController),
-        });
 
         return acc;
       },

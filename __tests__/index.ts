@@ -29,23 +29,14 @@ interface API {
 
 describe('Fetcher', () => {
   test('Fetcher call returns a function', () => {
-    expect(typeof fetcher('', '', '', new AbortController().signal)).toBe(
-      'function'
-    );
-    expect(
-      typeof fetcher(
-        'https://example.com',
-        '/',
-        'GET',
-        new AbortController().signal
-      )
-    ).toBe('function');
+    expect(typeof fetcher('', '', '')).toBe('function');
+    expect(typeof fetcher('https://example.com', '/', 'GET')).toBe('function');
   });
 
   test("Url without format expression won't compile", () => {
     const abortController = new AbortController();
 
-    fetcher('', '/x', 'GET', abortController.signal)({});
+    fetcher('', '/x', 'GET')({});
 
     expect(mocked).toHaveBeenCalledWith({
       baseURL: '',
@@ -57,23 +48,19 @@ describe('Fetcher', () => {
   });
 
   test('Compiling a url with a format expression will return the compiled url', () => {
-    const abortController = new AbortController();
-
-    fetcher('', '/x/:y', 'GET', abortController.signal)({ Params: { y: 'z' } });
+    fetcher('', '/x/:y', 'GET')({ Params: { y: 'z' } });
 
     expect(mocked).toHaveBeenCalledWith({
       baseURL: '',
       method: 'GET',
       url: '/x/z',
       withCredentials: true,
-      signal: abortController.signal,
+      signal: expect.any(AbortSignal),
     });
   });
 
   test('The Body forwards correctly', () => {
-    const abortController = new AbortController();
-
-    fetcher('', '/', 'POST', abortController.signal)({ Body: { a: 'b' } });
+    fetcher('', '/', 'POST')({ Body: { a: 'b' } });
 
     expect(mocked).toHaveBeenCalledWith({
       baseURL: '',
@@ -81,19 +68,12 @@ describe('Fetcher', () => {
       url: '/',
       withCredentials: true,
       data: { a: 'b' },
-      signal: abortController.signal,
+      signal: expect.any(AbortSignal),
     });
   });
 
   test('The Querystring forwards correctly', () => {
-    const abortController = new AbortController();
-
-    fetcher(
-      '',
-      '/',
-      'GET',
-      abortController.signal
-    )({ Querystring: { a: 'b' } });
+    fetcher('', '/', 'GET')({ Querystring: { a: 'b' } });
 
     expect(mocked).toHaveBeenCalledWith({
       baseURL: '',
@@ -101,17 +81,12 @@ describe('Fetcher', () => {
       url: '/',
       withCredentials: true,
       params: { a: 'b' },
-      signal: abortController.signal,
+      signal: expect.any(AbortSignal),
     });
   });
 
   test('Response returned correctly', async () => {
-    const response = await fetcher(
-      '',
-      '/',
-      'GET',
-      new AbortController().signal
-    )({});
+    const response = await fetcher('', '/', 'GET')({});
 
     expect(response).toEqual({ foo: 'bar' });
   });
@@ -119,7 +94,7 @@ describe('Fetcher', () => {
   test('Signal exist, work correctly', async () => {
     const controller = new AbortController();
 
-    const response = await fetcher('', '/', 'GET', controller.signal)({});
+    const response = await fetcher('', '/', 'GET')({});
 
     expect(axios).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -193,7 +168,6 @@ describe('Make API', () => {
 
     Object.values(api).forEach((endpoint) => {
       Object.values(endpoint).forEach((properties) => {
-        console.log(properties);
         expect(properties).toHaveProperty('abort');
         expect(typeof properties.abort).toBe('function');
       });
