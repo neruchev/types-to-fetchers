@@ -96,7 +96,11 @@ export const fetcher = <Config extends Payload, Error>(
 
         return data;
       } catch (error) {
-        const { response, message } = error as AxiosError<Error>;
+        const { response, message, code } = error as AxiosError<Error>;
+
+        if (code === 'ERR_CANCELED') {
+          return;
+        }
 
         throw (response?.data as any)?.error ?? message ?? 'Unknown error';
       }
