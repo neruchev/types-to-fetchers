@@ -78,6 +78,26 @@ const reply = await api['/foo/:bar'].POST({
 console.log(reply); // Error | string
 ```
 
+### Abort request
+
+Starting from **version** `1.1.0`, the package supports the abort request functionality using the AbortController.
+
+**Only the last request**, which is executed at the specified endpoint, **will be cancelled**.
+
+Example:
+1. Make 2 requests to the endpoint `/foo/:bar`
+2. Make
+```ts
+api['/foo/:bar'].POST.abort();
+```
+
+Only the second request will be aborted
+
+### Using abort
+```ts
+api['/foo/:bar'].POST.abort();
+```
+
 ### Effects
 
 You can use a callback to apply some effect to each request. For example, we will use the `createEffect` from the [effector](https://www.npmjs.com/package/effector) library.
