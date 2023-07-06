@@ -85,8 +85,10 @@ Starting from **version** `1.1.0`, the package supports the abort request functi
 **Only the last request**, which is executed at the specified endpoint, **will be cancelled**.
 
 Example:
+
 1. Make 2 requests to the endpoint `/foo/:bar`
 2. Make
+
 ```ts
 api['/foo/:bar'].POST.abort();
 ```
@@ -94,6 +96,7 @@ api['/foo/:bar'].POST.abort();
 Only the second request will be aborted
 
 ### Using abort
+
 ```ts
 api['/foo/:bar'].POST.abort();
 ```
