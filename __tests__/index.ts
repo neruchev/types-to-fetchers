@@ -3,7 +3,7 @@ import axios from 'axios';
 
 jest.mock('axios');
 const mocked = jest.mocked(axios, { shallow: true });
-mocked.mockReturnValue({ data: { foo: 'bar' } } as never);
+mocked.mockResolvedValue({ data: { foo: 'bar' } } as never);
 
 interface API {
   '/': {
@@ -34,6 +34,8 @@ describe('Fetcher', () => {
   });
 
   test("Url without format expression won't compile", () => {
+    const abortController = new AbortController();
+
     fetcher('', '/x', 'GET')({});
 
     expect(mocked).toHaveBeenCalledWith({
@@ -41,6 +43,7 @@ describe('Fetcher', () => {
       method: 'GET',
       url: '/x',
       withCredentials: true,
+      signal: abortController.signal,
     });
   });
 
@@ -52,6 +55,7 @@ describe('Fetcher', () => {
       method: 'GET',
       url: '/x/z',
       withCredentials: true,
+      signal: expect.any(AbortSignal),
     });
   });
 
@@ -64,6 +68,7 @@ describe('Fetcher', () => {
       url: '/',
       withCredentials: true,
       data: { a: 'b' },
+      signal: expect.any(AbortSignal),
     });
   });
 
@@ -76,11 +81,26 @@ describe('Fetcher', () => {
       url: '/',
       withCredentials: true,
       params: { a: 'b' },
+      signal: expect.any(AbortSignal),
     });
   });
 
   test('Response returned correctly', async () => {
     const response = await fetcher('', '/', 'GET')({});
+
+    expect(response).toEqual({ foo: 'bar' });
+  });
+
+  test('Signal exist, work correctly', async () => {
+    const controller = new AbortController();
+
+    const response = await fetcher('', '/', 'GET')({});
+
+    expect(axios).toHaveBeenCalledWith(
+      expect.objectContaining({
+        signal: controller.signal,
+      })
+    );
 
     expect(response).toEqual({ foo: 'bar' });
   });
@@ -130,6 +150,27 @@ describe('Make API', () => {
       method: 'GET',
       url: '/',
       withCredentials: true,
+      signal: expect.any(AbortSignal),
+    });
+  });
+
+  test('The api has abort function', () => {
+    const api = makeApi<API, {}>(
+      {
+        '/': ['GET'],
+        '/foo/:bar': ['GET', 'POST'],
+      },
+      { baseURL: 'hrrps://api.mysite.com/' }
+    );
+
+    api['/'].GET({});
+    api['/'].GET.abort();
+
+    Object.values(api).forEach((endpoint) => {
+      Object.values(endpoint).forEach((properties) => {
+        expect(properties).toHaveProperty('abort');
+        expect(typeof properties.abort).toBe('function');
+      });
     });
   });
 });

@@ -46,7 +46,9 @@ export type Schema<API> = {
 };
 
 export type Methods<MethodsRecord extends object, Error> = {
-  [Method in keyof MethodsRecord]: Fetcher<MethodsRecord[Method], Error>;
+  [Method in keyof MethodsRecord]: Fetcher<MethodsRecord[Method], Error> & {
+    abort: AbortController['abort'];
+  };
 };
 
 export type Endpoints<EndpointsRecord extends object, Error> = {
@@ -60,30 +62,60 @@ export type Fetcher<Config extends Payload, Error> = (
   data: Omit<Config, 'Reply' | 'Headers'>
 ) => Promise<Exclude<Config['Reply'], Error>>;
 
-export const fetcher =
-  <Config extends Payload, Error>(
-    baseURL: string,
-    url: string,
-    method: string
-  ): Fetcher<Config, Error> =>
-  async ({ Body, Querystring, Params }) => {
-    try {
-      const { data } = await axios({
-        url: compile(url)(Params),
-        method,
-        baseURL,
-        data: Body,
-        params: Querystring,
-        withCredentials: true,
-      });
+export const fetcher = <Config extends Payload, Error>(
+  baseURL: string,
+  url: string,
+  method: string
+): Fetcher<Config, Error> & {
+  abort: AbortController['abort'];
+} => {
+  let abortController: AbortController | undefined;
 
-      return data;
-    } catch (error) {
-      const { response, message } = error as AxiosError<Error>;
+  return Object.assign(
+    async ({
+      Body,
+      Querystring,
+      Params,
+    }: Partial<{
+      Body: Config['Body'];
+      Querystring: Config['Querystring'];
+      Params: Config['Params'];
+    }>) => {
+      abortController = new AbortController();
 
-      throw (response?.data as any)?.error ?? message ?? 'Unknown error';
+      try {
+        const { data } = await axios({
+          url: compile(url)(Params),
+          method,
+          baseURL,
+          data: Body,
+          params: Querystring,
+          withCredentials: true,
+          signal: abortController.signal,
+        });
+
+        return data;
+      } catch (error) {
+        const { response, message, code } = error as AxiosError<Error>;
+
+        if (code === 'ERR_CANCELED') {
+          return;
+        }
+
+        throw (response?.data as any)?.error ?? message ?? 'Unknown error';
+      }
+    },
+    {
+      abort: () => {
+        if (!abortController) {
+          return;
+        }
+
+        abortController.abort();
+      },
     }
-  };
+  );
+};
 
 export const makeApi = <API extends object, Error, Effect = void>(
   schema: Schema<API>,
@@ -96,6 +128,7 @@ export const makeApi = <API extends object, Error, Effect = void>(
     result[endpoint] = result[endpoint].reduce(
       (acc: Record<string, Fetcher<Payload, Error>>, method: string) => {
         const handler = fetcher(baseURL, endpoint, method);
+
         acc[method] = effect
           ? effect(handler, { endpoint, method, baseURL })
           : handler;
