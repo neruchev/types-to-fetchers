@@ -41,14 +41,17 @@ export type Effect<Config extends Payload, Error> = (
   }
 ) => Fetcher<Config, Error>;
 
+export type EffectAbort = {
+  abort: AbortController['abort'];
+};
+
 export type Schema<API> = {
   [Endpoint in keyof API]: TuplifyUnion<keyof API[Endpoint]>;
 };
 
 export type Methods<MethodsRecord extends object, Error> = {
-  [Method in keyof MethodsRecord]: Fetcher<MethodsRecord[Method], Error> & {
-    abort: AbortController['abort'];
-  };
+  [Method in keyof MethodsRecord]: Fetcher<MethodsRecord[Method], Error> &
+    EffectAbort;
 };
 
 export type Endpoints<EndpointsRecord extends object, Error> = {
@@ -66,9 +69,7 @@ export const fetcher = <Config extends Payload, Error>(
   baseURL: string,
   url: string,
   method: string
-): Fetcher<Config, Error> & {
-  abort: AbortController['abort'];
-} => {
+): Fetcher<Config, Error> & EffectAbort => {
   let abortController: AbortController | undefined;
 
   return Object.assign(
@@ -128,9 +129,12 @@ export const makeApi = <API extends object, Error, Effect = void>(
     result[endpoint] = result[endpoint].reduce(
       (acc: Record<string, Fetcher<Payload, Error>>, method: string) => {
         const handler = fetcher(baseURL, endpoint, method);
+        const abort = handler.abort;
 
         acc[method] = effect
-          ? effect(handler, { endpoint, method, baseURL })
+          ? Object.assign(effect(handler, { endpoint, method, baseURL }), {
+              abort,
+            })
           : handler;
 
         return acc;

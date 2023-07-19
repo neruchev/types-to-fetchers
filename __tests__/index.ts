@@ -1,4 +1,4 @@
-import { fetcher, makeApi } from '../src';
+import { Fetcher, fetcher, makeApi, Payload } from '../src';
 import axios from 'axios';
 
 jest.mock('axios');
@@ -25,6 +25,11 @@ interface API {
       Reply: Error | string;
     };
   };
+}
+
+interface SimpleError {
+  error: string;
+  message?: string;
 }
 
 describe('Fetcher', () => {
@@ -154,7 +159,7 @@ describe('Make API', () => {
     });
   });
 
-  test('The api has abort function', () => {
+  test('The api has abort function when effect do not exist', () => {
     const api = makeApi<API, {}>(
       {
         '/': ['GET'],
@@ -170,6 +175,29 @@ describe('Make API', () => {
       Object.values(endpoint).forEach((properties) => {
         expect(properties).toHaveProperty('abort');
         expect(typeof properties.abort).toBe('function');
+      });
+    });
+  });
+
+  test('The api has abort function when effect exist', () => {
+    const createEffect = jest.fn().mockResolvedValue({});
+
+    const makeEffect: Fetcher<Payload, SimpleError> = (action) =>
+      createEffect(action);
+
+    const api = makeApi<API, {}>(
+      {
+        '/': ['GET'],
+        '/foo/:bar': ['GET', 'POST'],
+      },
+      { baseURL: 'hrrps://api.mysite.com/', effect: makeEffect as never }
+    );
+
+    api['/'].GET.abort();
+
+    Object.values(api).forEach((endpoint) => {
+      Object.values(endpoint).forEach((properties) => {
+        expect(properties).toHaveProperty('abort');
       });
     });
   });
