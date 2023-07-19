@@ -119,10 +119,11 @@ type Reply<PayloadRecord extends Payload> = Exclude<
 >;
 
 type Methods<MethodsRecord extends object> = {
-  [Method in keyof MethodsRecord]: Effect<
+    [Method in keyof MethodsRecord]: Effect<
     Omit<MethodsRecord[Method], 'Reply' | 'Headers'>,
     Reply<MethodsRecord[Method]>
-  >;
+> &
+    EffectAbort;
 };
 
 type Endpoints<EndpointsRecord extends object> = {
