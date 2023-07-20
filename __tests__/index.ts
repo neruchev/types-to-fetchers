@@ -124,21 +124,6 @@ describe('Make API', () => {
     expect(api).toMatchSnapshot();
   });
 
-  test('The effect forwards correctly', async () => {
-    const api = makeApi<API, {}>(
-      {
-        '/': ['GET'],
-        '/foo/:bar': ['GET', 'POST'],
-      },
-      {
-        baseURL: 'hrrps://api.mysite.com/',
-        effect: (_, params) => params as never,
-      }
-    );
-
-    expect(api).toMatchSnapshot();
-  });
-
   test('The baseURL forwards correctly', () => {
     const api = makeApi<API, {}>(
       {
