@@ -38,6 +38,7 @@ export type Effect<Config extends Payload, Error> = (
     baseURL: string;
     endpoint: string;
     method: string;
+    signal: AbortSignal;
   }
 ) => Fetcher<Config, Error>;
 
@@ -62,60 +63,47 @@ export type Fetcher<Config extends Payload, Error> = (
   data: Omit<Config, 'Reply' | 'Headers'>
 ) => Promise<Exclude<Config['Reply'], Error>>;
 
-export const fetcher = <Config extends Payload, Error>(
-  baseURL: string,
-  url: string,
-  method: string
-): Fetcher<Config, Error> & {
-  abort: AbortController['abort'];
-} => {
-  let abortController: AbortController | undefined;
+export const fetcher =
+  <Config extends Payload, Error>(
+    baseURL: string,
+    url: string,
+    method: string,
+    signal: AbortSignal
+  ): Fetcher<Config, Error> =>
+  async ({
+    Body,
+    Querystring,
+    Params,
+    Headers,
+  }: Partial<{
+    Body: Config['Body'];
+    Querystring: Config['Querystring'];
+    Params: Config['Params'];
+    Headers: Config['Headers'];
+  }>) => {
+    try {
+      const { data } = await axios({
+        url: compile(url)(Params),
+        method,
+        baseURL,
+        data: Body,
+        params: Querystring,
+        withCredentials: true,
+        signal,
+        headers: Headers as any,
+      });
 
-  return Object.assign(
-    async ({
-      Body,
-      Querystring,
-      Params,
-    }: Partial<{
-      Body: Config['Body'];
-      Querystring: Config['Querystring'];
-      Params: Config['Params'];
-    }>) => {
-      abortController = new AbortController();
+      return data;
+    } catch (error) {
+      const { response, message, code } = error as AxiosError<Error>;
 
-      try {
-        const { data } = await axios({
-          url: compile(url)(Params),
-          method,
-          baseURL,
-          data: Body,
-          params: Querystring,
-          withCredentials: true,
-          signal: abortController.signal,
-        });
-
-        return data;
-      } catch (error) {
-        const { response, message, code } = error as AxiosError<Error>;
-
-        if (code === 'ERR_CANCELED') {
-          return;
-        }
-
-        throw (response?.data as any)?.error ?? message ?? 'Unknown error';
+      if (code === 'ERR_CANCELED') {
+        return;
       }
-    },
-    {
-      abort: () => {
-        if (!abortController) {
-          return;
-        }
 
-        abortController.abort();
-      },
+      throw (response?.data as any)?.error ?? message ?? 'Unknown error';
     }
-  );
-};
+  };
 
 export const makeApi = <API extends object, Error, Effect = void>(
   schema: Schema<API>,
@@ -127,11 +115,16 @@ export const makeApi = <API extends object, Error, Effect = void>(
   for (const endpoint in result) {
     result[endpoint] = result[endpoint].reduce(
       (acc: Record<string, Fetcher<Payload, Error>>, method: string) => {
-        const handler = fetcher(baseURL, endpoint, method);
+        const abortController = new AbortController();
+        const signal = abortController.signal;
+        const handler = fetcher(baseURL, endpoint, method, signal);
 
-        acc[method] = effect
-          ? effect(handler, { endpoint, method, baseURL })
-          : handler;
+        acc[method] = Object.assign(
+          effect
+            ? effect(handler, { endpoint, method, baseURL, signal })
+            : handler,
+          { abort: () => abortController.abort() }
+        );
 
         return acc;
       },

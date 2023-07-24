@@ -4,21 +4,51 @@ exports[`Make API The effect forwards correctly 1`] = `
 {
   "/": {
     "GET": {
-      "baseURL": "hrrps://api.mysite.com/",
-      "endpoint": "/",
-      "method": "GET",
+      "abort": [Function],
+      "params": {
+        "baseURL": "hrrps://api.mysite.com/",
+        "endpoint": "/",
+        "method": "GET",
+        "signal": AbortSignal {
+          Symbol(kEvents): Map {},
+          Symbol(events.maxEventTargetListeners): 10,
+          Symbol(events.maxEventTargetListenersWarned): false,
+          Symbol(kAborted): false,
+          Symbol(kReason): undefined,
+        },
+      },
     },
   },
   "/foo/:bar": {
     "GET": {
-      "baseURL": "hrrps://api.mysite.com/",
-      "endpoint": "/foo/:bar",
-      "method": "GET",
+      "abort": [Function],
+      "params": {
+        "baseURL": "hrrps://api.mysite.com/",
+        "endpoint": "/foo/:bar",
+        "method": "GET",
+        "signal": AbortSignal {
+          Symbol(kEvents): Map {},
+          Symbol(events.maxEventTargetListeners): 10,
+          Symbol(events.maxEventTargetListenersWarned): false,
+          Symbol(kAborted): false,
+          Symbol(kReason): undefined,
+        },
+      },
     },
     "POST": {
-      "baseURL": "hrrps://api.mysite.com/",
-      "endpoint": "/foo/:bar",
-      "method": "POST",
+      "abort": [Function],
+      "params": {
+        "baseURL": "hrrps://api.mysite.com/",
+        "endpoint": "/foo/:bar",
+        "method": "POST",
+        "signal": AbortSignal {
+          Symbol(kEvents): Map {},
+          Symbol(events.maxEventTargetListeners): 10,
+          Symbol(events.maxEventTargetListenersWarned): false,
+          Symbol(kAborted): false,
+          Symbol(kReason): undefined,
+        },
+      },
     },
   },
 }

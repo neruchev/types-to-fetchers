@@ -122,7 +122,7 @@ type Methods<MethodsRecord extends object> = {
   [Method in keyof MethodsRecord]: Effect<
     Omit<MethodsRecord[Method], 'Reply' | 'Headers'>,
     Reply<MethodsRecord[Method]>
-  >;
+  > & { abort: AbortController['abort'] };
 };
 
 type Endpoints<EndpointsRecord extends object> = {
