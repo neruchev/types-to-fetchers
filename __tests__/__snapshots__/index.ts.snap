@@ -4,50 +4,26 @@ exports[`Make API The effect forwards correctly 1`] = `
 {
   "/": {
     "GET": {
-      "abort": [Function],
       "params": {
         "baseURL": "hrrps://api.mysite.com/",
         "endpoint": "/",
         "method": "GET",
-        "signal": AbortSignal {
-          Symbol(kEvents): Map {},
-          Symbol(events.maxEventTargetListeners): 10,
-          Symbol(events.maxEventTargetListenersWarned): false,
-          Symbol(kAborted): false,
-          Symbol(kReason): undefined,
-        },
       },
     },
   },
   "/foo/:bar": {
     "GET": {
-      "abort": [Function],
       "params": {
         "baseURL": "hrrps://api.mysite.com/",
         "endpoint": "/foo/:bar",
         "method": "GET",
-        "signal": AbortSignal {
-          Symbol(kEvents): Map {},
-          Symbol(events.maxEventTargetListeners): 10,
-          Symbol(events.maxEventTargetListenersWarned): false,
-          Symbol(kAborted): false,
-          Symbol(kReason): undefined,
-        },
       },
     },
     "POST": {
-      "abort": [Function],
       "params": {
         "baseURL": "hrrps://api.mysite.com/",
         "endpoint": "/foo/:bar",
         "method": "POST",
-        "signal": AbortSignal {
-          Symbol(kEvents): Map {},
-          Symbol(events.maxEventTargetListeners): 10,
-          Symbol(events.maxEventTargetListenersWarned): false,
-          Symbol(kAborted): false,
-          Symbol(kReason): undefined,
-        },
       },
     },
   },

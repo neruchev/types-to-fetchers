@@ -9,6 +9,8 @@ export type Payload = {
   Reply: unknown;
 };
 
+export type AxiosOptions = { Axios?: { signal?: AbortSignal } };
+
 export type Options<Config extends Payload, Error> = {
   baseURL: string;
   effect?: Effect<Config, Error>;
@@ -38,7 +40,6 @@ export type Effect<Config extends Payload, Error> = (
     baseURL: string;
     endpoint: string;
     method: string;
-    signal: AbortSignal;
   }
 ) => Fetcher<Config, Error>;
 
@@ -47,9 +48,7 @@ export type Schema<API> = {
 };
 
 export type Methods<MethodsRecord extends object, Error> = {
-  [Method in keyof MethodsRecord]: Fetcher<MethodsRecord[Method], Error> & {
-    abort: AbortController['abort'];
-  };
+  [Method in keyof MethodsRecord]: Fetcher<MethodsRecord[Method], Error>;
 };
 
 export type Endpoints<EndpointsRecord extends object, Error> = {
@@ -60,27 +59,16 @@ export type Endpoints<EndpointsRecord extends object, Error> = {
 };
 
 export type Fetcher<Config extends Payload, Error> = (
-  data: Omit<Config, 'Reply' | 'Headers'>
+  data: Omit<Config, 'Reply'> & AxiosOptions
 ) => Promise<Exclude<Config['Reply'], Error>>;
 
 export const fetcher =
   <Config extends Payload, Error>(
     baseURL: string,
     url: string,
-    method: string,
-    signal: AbortSignal
+    method: string
   ): Fetcher<Config, Error> =>
-  async ({
-    Body,
-    Querystring,
-    Params,
-    Headers,
-  }: Partial<{
-    Body: Config['Body'];
-    Querystring: Config['Querystring'];
-    Params: Config['Params'];
-    Headers: Config['Headers'];
-  }>) => {
+  async ({ Body, Querystring, Params, Headers, Axios }) => {
     try {
       const { data } = await axios({
         url: compile(url)(Params),
@@ -89,7 +77,7 @@ export const fetcher =
         data: Body,
         params: Querystring,
         withCredentials: true,
-        signal,
+        signal: Axios?.signal,
         headers: Headers as any,
       });
 
@@ -115,16 +103,11 @@ export const makeApi = <API extends object, Error, Effect = void>(
   for (const endpoint in result) {
     result[endpoint] = result[endpoint].reduce(
       (acc: Record<string, Fetcher<Payload, Error>>, method: string) => {
-        const abortController = new AbortController();
-        const signal = abortController.signal;
-        const handler = fetcher(baseURL, endpoint, method, signal);
+        const handler = fetcher(baseURL, endpoint, method);
 
-        acc[method] = Object.assign(
-          effect
-            ? effect(handler, { endpoint, method, baseURL, signal })
-            : handler,
-          { abort: () => abortController.abort() }
-        );
+        acc[method] = effect
+          ? effect(handler, { endpoint, method, baseURL })
+          : handler;
 
         return acc;
       },

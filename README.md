@@ -80,25 +80,18 @@ console.log(reply); // Error | string
 
 ### Abort request
 
-Starting from **version** `1.1.0`, the package supports the abort request functionality using the AbortController.
-
-**Only the last request**, which is executed at the specified endpoint, **will be cancelled**.
-
-Example:
-
-1. Make 2 requests to the endpoint `/foo/:bar`
-2. Make
-
 ```ts
-api['/foo/:bar'].POST.abort();
-```
+const abortController = new AbortController();
 
-Only the second request will be aborted
+const reply = await api['/foo/:bar'].POST({
+  Params: { bar: 'abc' },
+  Body: { baz: 'def' },
+  Axios: { signal: abortController.signal },
+});
 
-### Using abort
+// ...
 
-```ts
-api['/foo/:bar'].POST.abort();
+abortController.abort();
 ```
 
 ### Effects
@@ -120,9 +113,9 @@ type Reply<PayloadRecord extends Payload> = Exclude<
 
 type Methods<MethodsRecord extends object> = {
   [Method in keyof MethodsRecord]: Effect<
-    Omit<MethodsRecord[Method], 'Reply' | 'Headers'>,
+    Omit<MethodsRecord[Method], 'Reply'> & AxiosOptions,
     Reply<MethodsRecord[Method]>
-  > & { abort: AbortController['abort'] };
+  >;
 };
 
 type Endpoints<EndpointsRecord extends object> = {
@@ -163,6 +156,22 @@ const $app = createStore<State>(initialState).on(
     version: payload.version,
   })
 );
+```
+
+```ts
+import React, { useEffect } from 'react';
+
+const ComponentName: React.FC = () => {
+  useEffect(() => {
+    const abortController = new AbortController();
+
+    api['/'].GET({ Axios: { signal: abortController.signal } });
+
+    return () => abortController.abort();
+  }, []);
+
+  return <>...</>;
+};
 ```
 
 ## License
