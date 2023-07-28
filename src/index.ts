@@ -68,7 +68,7 @@ export const fetcher =
     url: string,
     method: string
   ): Fetcher<Config, Error> =>
-  async ({ Body, Querystring, Params, Headers, Axios }) => {
+  async ({ Body, Querystring, Params, Headers, Axios } = {} as never) => {
     try {
       const { data } = await axios({
         url: compile(url)(Params),
