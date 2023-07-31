@@ -83,11 +83,7 @@ export const fetcher =
 
       return data;
     } catch (error) {
-      const { response, message, code } = error as AxiosError<Error>;
-
-      if (code === 'ERR_CANCELED') {
-        return;
-      }
+      const { response, message } = error as AxiosError<Error>;
 
       throw (response?.data as any)?.error ?? message ?? 'Unknown error';
     }
