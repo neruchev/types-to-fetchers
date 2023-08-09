@@ -3,7 +3,17 @@ import axios from 'axios';
 
 jest.mock('axios');
 const mocked = jest.mocked(axios, { shallow: true });
-mocked.mockResolvedValue({ data: { foo: 'bar' } } as never);
+
+mocked.mockImplementation((config: any) => {
+  if (config?.onUploadProgress) {
+    config.onUploadProgress({ loaded: 50, total: 100 });
+  }
+  if (config?.onDownloadProgress) {
+    config.onDownloadProgress({ loaded: 50, total: 100 });
+  }
+
+  return Promise.resolve({ data: { foo: 'bar' } }) as never;
+});
 
 interface API {
   '/': {
@@ -106,6 +116,35 @@ describe('Fetcher', () => {
 
     expect(axios).toHaveBeenCalledWith(expect.objectContaining({ signal }));
     expect(response).toEqual({ foo: 'bar' });
+  });
+
+  test('onUploadProgress is called during upload', async () => {
+    const onUploadProgressMock = jest.fn();
+
+    await fetcher(
+      'https://example.com',
+      '/upload',
+      'POST'
+    )({
+      Body: { some: 'data' },
+      Axios: { onUploadProgress: onUploadProgressMock },
+    });
+
+    expect(onUploadProgressMock).toHaveBeenCalled();
+  });
+
+  test('onDownloadProgress is called during download', async () => {
+    const onDownloadProgressMock = jest.fn();
+
+    await fetcher(
+      'https://example.com',
+      '/download',
+      'GET'
+    )({
+      Axios: { onDownloadProgress: onDownloadProgressMock },
+    });
+
+    expect(onDownloadProgressMock).toHaveBeenCalled();
   });
 });
 

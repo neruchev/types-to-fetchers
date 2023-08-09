@@ -9,7 +9,13 @@ export type Payload = {
   Reply: unknown;
 };
 
-export type AxiosOptions = { Axios?: { signal?: AbortSignal } };
+export type AxiosOptions = {
+  Axios?: {
+    signal?: AbortSignal;
+    onUploadProgress?: (progressEvent: ProgressEvent) => void;
+    onDownloadProgress?: (progressEvent: ProgressEvent) => void;
+  };
+};
 
 export type Options<Config extends Payload, Error> = {
   baseURL: string;
@@ -79,6 +85,8 @@ export const fetcher =
         withCredentials: true,
         signal: Axios?.signal,
         headers: Headers as any,
+        onUploadProgress: Axios?.onUploadProgress,
+        onDownloadProgress: Axios?.onDownloadProgress,
       });
 
       return data;

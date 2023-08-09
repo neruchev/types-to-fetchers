@@ -94,6 +94,29 @@ const reply = await api['/foo/:bar'].POST({
 abortController.abort();
 ```
 
+### Handle File Progress
+
+```ts
+const reply = await api['/foo/:bar'].POST({
+  Params: { bar: 'abc' },
+  Body: { baz: 'def' },
+  Axios: {
+    onUploadProgress: (progressEvent) => {
+      const percentCompleted = Math.round(
+        (progressEvent.loaded * 100) / progressEvent.total
+      );
+      console.log(`Upload progress: ${percentCompleted}%`);
+    },
+    onDownloadProgress: (progressEvent) => {
+      const percentCompleted = Math.round(
+        (progressEvent.loaded * 100) / progressEvent.total
+      );
+      console.log(`Download progress: ${percentCompleted}%`);
+    },
+  },
+});
+```
+
 ### Effects
 
 You can use a callback to apply some effect to each request. For example, we will use the `createEffect` from the [effector](https://www.npmjs.com/package/effector) library.
