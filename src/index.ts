@@ -20,6 +20,7 @@ export type AxiosOptions = {
 export type Options<Config extends Payload, Error> = {
   baseURL: string;
   effect?: Effect<Config, Error>;
+  paramsSerializer?: (params: any) => string;
 };
 
 export type UnionToIntersection<U> = (
@@ -42,8 +43,7 @@ export type TuplifyUnion<
 
 export type Effect<Config extends Payload, Error> = (
   action: Fetcher<Config, Error>,
-  params: {
-    baseURL: string;
+  params: Omit<Options<Config, Error>, 'effect'> & {
     endpoint: string;
     method: string;
   }
@@ -72,7 +72,8 @@ export const fetcher =
   <Config extends Payload, Error>(
     baseURL: string,
     url: string,
-    method: string
+    method: string,
+    paramsSerializer?: Options<Config, Error>['paramsSerializer']
   ): Fetcher<Config, Error> =>
   async ({ Body, Querystring, Params, Headers, Axios } = {} as never) => {
     try {
@@ -87,6 +88,7 @@ export const fetcher =
         headers: Headers as any,
         onUploadProgress: Axios?.onUploadProgress,
         onDownloadProgress: Axios?.onDownloadProgress,
+        paramsSerializer,
       });
 
       return data;
@@ -102,15 +104,15 @@ export const makeApi = <API extends object, Error, Effect = void>(
   options: Options<Payload, Error>
 ): Effect extends void ? Endpoints<API, Error> : Effect => {
   const result = schema as any;
-  const { baseURL, effect } = options;
+  const { baseURL, effect, paramsSerializer } = options;
 
   for (const endpoint in result) {
     result[endpoint] = result[endpoint].reduce(
       (acc: Record<string, Fetcher<Payload, Error>>, method: string) => {
-        const handler = fetcher(baseURL, endpoint, method);
+        const handler = fetcher(baseURL, endpoint, method, paramsSerializer);
 
         acc[method] = effect
-          ? effect(handler, { endpoint, method, baseURL })
+          ? effect(handler, { endpoint, method, baseURL, paramsSerializer })
           : handler;
 
         return acc;
