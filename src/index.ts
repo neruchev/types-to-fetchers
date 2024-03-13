@@ -78,7 +78,7 @@ export const fetcher =
   async ({ Body, Querystring, Params, Headers, Axios } = {} as never) => {
     try {
       const { data } = await axios({
-        url: compile(url)(Params),
+        url: compile(url, { encode: encodeURIComponent })(Params),
         method,
         baseURL,
         data: Body,
