@@ -19,6 +19,7 @@ export type AxiosOptions = {
 
 export type Options<Config extends Payload, Error> = {
   baseURL: string;
+  timeout?: number;
   effect?: Effect<Config, Error>;
   paramsSerializer?: (params: any) => string;
 };
@@ -73,6 +74,7 @@ export const fetcher =
     baseURL: string,
     url: string,
     method: string,
+    timeout?: number,
     paramsSerializer?: Options<Config, Error>['paramsSerializer']
   ): Fetcher<Config, Error> =>
   async ({ Body, Querystring, Params, Headers, Axios } = {} as never) => {
@@ -81,6 +83,7 @@ export const fetcher =
         url: compile(url, { encode: encodeURIComponent })(Params),
         method,
         baseURL,
+        timeout,
         data: Body,
         params: Querystring,
         withCredentials: true,
@@ -104,15 +107,15 @@ export const makeApi = <API extends object, Error, Effect = void>(
   options: Options<Payload, Error>
 ): Effect extends void ? Endpoints<API, Error> : Effect => {
   const result = schema as any;
-  const { baseURL, effect, paramsSerializer } = options;
+  const { baseURL, effect, timeout,paramsSerializer } = options;
 
   for (const endpoint in result) {
     result[endpoint] = result[endpoint].reduce(
       (acc: Record<string, Fetcher<Payload, Error>>, method: string) => {
-        const handler = fetcher(baseURL, endpoint, method, paramsSerializer);
+        const handler = fetcher(baseURL, endpoint, method, timeout, paramsSerializer);
 
         acc[method] = effect
-          ? effect(handler, { endpoint, method, baseURL, paramsSerializer })
+          ? effect(handler, { endpoint, method, baseURL, timeout, paramsSerializer })
           : handler;
 
         return acc;
