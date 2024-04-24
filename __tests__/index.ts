@@ -169,6 +169,7 @@ describe('Make API', () => {
       },
       {
         baseURL: 'hrrps://api.mysite.com/',
+        timeout: 20000,
         effect: (_, params) => ({ params } as never),
       }
     );

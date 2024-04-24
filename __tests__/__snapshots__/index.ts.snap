@@ -9,6 +9,7 @@ exports[`Make API The effect forwards correctly 1`] = `
         "endpoint": "/",
         "method": "GET",
         "paramsSerializer": undefined,
+        "timeout": 20000,
       },
     },
   },
@@ -19,6 +20,7 @@ exports[`Make API The effect forwards correctly 1`] = `
         "endpoint": "/foo/:bar",
         "method": "GET",
         "paramsSerializer": undefined,
+        "timeout": 20000,
       },
     },
     "POST": {
@@ -27,6 +29,7 @@ exports[`Make API The effect forwards correctly 1`] = `
         "endpoint": "/foo/:bar",
         "method": "POST",
         "paramsSerializer": undefined,
+        "timeout": 20000,
       },
     },
   },
