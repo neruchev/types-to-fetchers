@@ -107,15 +107,27 @@ export const makeApi = <API extends object, Error, Effect = void>(
   options: Options<Payload, Error>
 ): Effect extends void ? Endpoints<API, Error> : Effect => {
   const result = schema as any;
-  const { baseURL, effect, timeout,paramsSerializer } = options;
+  const { baseURL, effect, timeout, paramsSerializer } = options;
 
   for (const endpoint in result) {
     result[endpoint] = result[endpoint].reduce(
       (acc: Record<string, Fetcher<Payload, Error>>, method: string) => {
-        const handler = fetcher(baseURL, endpoint, method, timeout, paramsSerializer);
+        const handler = fetcher(
+          baseURL,
+          endpoint,
+          method,
+          timeout,
+          paramsSerializer
+        );
 
         acc[method] = effect
-          ? effect(handler, { endpoint, method, baseURL, timeout, paramsSerializer })
+          ? effect(handler, {
+              endpoint,
+              method,
+              baseURL,
+              timeout,
+              paramsSerializer,
+            })
           : handler;
 
         return acc;
