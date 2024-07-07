@@ -1,4 +1,4 @@
-import axios, { AxiosError } from 'axios';
+import axios, { AxiosError, ResponseType } from 'axios';
 import { compile } from 'path-to-regexp';
 
 export type Payload = {
@@ -14,6 +14,7 @@ export type AxiosOptions = {
     signal?: AbortSignal;
     onUploadProgress?: (progressEvent: ProgressEvent) => void;
     onDownloadProgress?: (progressEvent: ProgressEvent) => void;
+    responseType?: ResponseType;
   };
 };
 
@@ -92,6 +93,7 @@ export const fetcher =
         onUploadProgress: Axios?.onUploadProgress,
         onDownloadProgress: Axios?.onDownloadProgress,
         paramsSerializer,
+        responseType: Axios?.responseType,
       });
 
       return data;
