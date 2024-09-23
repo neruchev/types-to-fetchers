@@ -41,7 +41,7 @@ export type TuplifyUnion<
   T,
   L = LastOf<T>,
   N = [T] extends [never] ? true : false
-> = true extends N ? [] : [...TuplifyUnion<Exclude<T, L>>, L];
+> = true extends N ? readonly [] : readonly [...TuplifyUnion<Exclude<T, L>>, L];
 
 export type Effect<Config extends Payload, Error> = (
   action: Fetcher<Config, Error>,
