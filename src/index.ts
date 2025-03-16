@@ -100,7 +100,12 @@ export const fetcher =
     } catch (error) {
       const { response, message } = error as AxiosError<Error>;
 
-      throw (response?.data as any)?.error ?? (response?.data as any) ?? message ?? 'Unknown error';
+      throw (
+        (response?.data as any)?.error ??
+        (response?.data as any) ??
+        message ??
+        'Unknown error'
+      );
     }
   };
 
